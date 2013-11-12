@@ -1,8 +1,9 @@
 package Latte;
-import java_cup.runtime.*;
-import Latte.*;
-import Latte.Absyn.*;
-import java.io.*;
+
+import TypeRecognizer.ProgramTR;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 
 public class Test
 {
@@ -37,6 +38,9 @@ public class Test
       System.out.println("[Linearized Tree]");
       System.out.println();
       System.out.println(PrettyPrinter.print(parse_tree));
+
+      System.out.println("[Declared Functions]");
+      System.out.println(parse_tree.accept(new ProgramTR(), null));
     }
     catch(Throwable e)
     {
