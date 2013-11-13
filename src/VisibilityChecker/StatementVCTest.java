@@ -2,11 +2,12 @@ package VisibilityChecker;
 
 import Latte.Absyn.*;
 import junit.framework.Assert;
-import junit.framework.AssertionFailedError;
 import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static junit.framework.Assert.assertEquals;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,8 +17,9 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class StatementVCTest {
+
     @Test
-    public void testGoodVisitDecl() throws Exception {
+    public void testGoodDecl() throws Exception {
         ListItem declarationItems = new ListItem();
         declarationItems.add(new SNoInit("id"));
         declarationItems.add(new SNoInit("id2"));
@@ -32,7 +34,7 @@ public class StatementVCTest {
 
 
     @Test
-    public void testVisitDeclDuplicated() throws Exception {
+    public void testDeclDuplicated() throws Exception {
         ListItem declarationItems = new ListItem();
         declarationItems.add(new SNoInit("id"));
         declarationItems.add(new SNoInit("id"));
@@ -47,14 +49,12 @@ public class StatementVCTest {
         Assert.assertEquals(expectedErrors, errors);
     }
 
-    // TODO: expression checking
-    @Test(expected = AssertionFailedError.class)
-    public void testVisitDeclMissingId() throws Exception {
+    @Test
+    public void testDeclMissingId() throws Exception {
         ListItem declarationItems = new ListItem();
         Expr expression = new EAdd(new EVar("missingId"), new Plus(), new ELitInt(0));
         declarationItems.add(new SInit("id", expression));
         SDecl declaration = new SDecl(null,declarationItems);
-
 
         Stmt.Visitor<Set<VisibilityError>, Set<String>>  visitor = new StatementVC();
         Set<VisibilityError> errors = visitor.visit(declaration, new HashSet<String>());
@@ -64,5 +64,10 @@ public class StatementVCTest {
         Assert.assertEquals(expectedErrors, errors);
     }
 
+    @Test
+    public void testEmptyStmt() {
+        SEmpty empty = new SEmpty();
+        assertEquals(null, empty.accept(new StatementVC(), null));
+    }
 
 }
