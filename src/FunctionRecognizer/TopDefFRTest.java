@@ -1,4 +1,4 @@
-package TypeRecognizer;
+package FunctionRecognizer;
 
 import Latte.Absyn.*;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
  * Time: 6:19 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TopDefTRTest {
+public class TopDefFRTest {
 
     private static final String IDENTIFIER = "IDENT";
 
@@ -25,7 +25,7 @@ public class TopDefTRTest {
         listArg.add(new Arg(new TStr(), null));
         listArg.add(new Arg(new TInt(), null));
         FnDef fnDef = new FnDef(new TInt(), IDENTIFIER, listArg, null);
-        TopDefTR topDefTypeRecognizer = new TopDefTR();
+        TopDefFR topDefTypeRecognizer = new TopDefFR();
 
         Map.Entry<String, FunctionSignature> result = topDefTypeRecognizer.visit(fnDef, null);
 

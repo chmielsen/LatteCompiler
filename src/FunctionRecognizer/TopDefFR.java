@@ -1,4 +1,4 @@
-package TypeRecognizer;
+package FunctionRecognizer;
 
 import Latte.Absyn.Arg;
 import Latte.Absyn.FnDef;
@@ -15,7 +15,7 @@ import java.util.Map;
  * Time: 6:03 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TopDefTR implements TopDef.Visitor<Map.Entry<String, FunctionSignature>, Object> {
+public class TopDefFR implements TopDef.Visitor<Map.Entry<String, FunctionSignature>, Object> {
 
     @Override
     public Map.Entry<String, FunctionSignature> visit(FnDef p, Object arg) {

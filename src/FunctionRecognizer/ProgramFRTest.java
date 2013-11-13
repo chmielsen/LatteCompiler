@@ -1,4 +1,4 @@
-package TypeRecognizer;
+package FunctionRecognizer;
 
 import Latte.Absyn.*;
 import junit.framework.Assert;
@@ -14,7 +14,7 @@ import java.util.Map;
  * Time: 6:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ProgramTRTest {
+public class ProgramFRTest {
 
     private static final String IDENTIFIER = "IDENT";
 
@@ -27,7 +27,7 @@ public class ProgramTRTest {
         listTopDef.add(fnDef);
         Program p = new Program(listTopDef);
 
-        Map<String, FunctionSignature> typeMap = p.accept(new ProgramTR(), null);
+        Map<String, FunctionSignature> typeMap = p.accept(new ProgramFR(), null);
         System.out.println(typeMap.toString());
 
         Map<String, FunctionSignature> expectedTypeMap = new HashMap<String, FunctionSignature>();

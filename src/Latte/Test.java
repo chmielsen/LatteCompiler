@@ -1,6 +1,6 @@
 package Latte;
 
-import TypeRecognizer.ProgramTR;
+import FunctionRecognizer.ProgramFR;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -40,7 +40,7 @@ public class Test
       System.out.println(PrettyPrinter.print(parse_tree));
 
       System.out.println("[Declared Functions]");
-      System.out.println(parse_tree.accept(new ProgramTR(), null));
+      System.out.println(parse_tree.accept(new ProgramFR(), null));
     }
     catch(Throwable e)
     {
