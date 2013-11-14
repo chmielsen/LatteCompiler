@@ -2,6 +2,7 @@ package VisibilityChecker;
 
 import Latte.Absyn.Program;
 import Latte.Absyn.TopDef;
+import VisibilityChecker.Errors.VisibilityError;
 
 import java.util.ArrayList;
 import java.util.List;

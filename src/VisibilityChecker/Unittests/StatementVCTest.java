@@ -1,6 +1,10 @@
-package VisibilityChecker;
+package VisibilityChecker.Unittests;
 
 import Latte.Absyn.*;
+import VisibilityChecker.Errors.DuplicatedIdentifier;
+import VisibilityChecker.Errors.IdentifierNotVisible;
+import VisibilityChecker.Errors.VisibilityError;
+import VisibilityChecker.StatementVC;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -68,6 +72,24 @@ public class StatementVCTest {
     public void testEmptyStmt() {
         SEmpty empty = new SEmpty();
         assertEquals(null, empty.accept(new StatementVC(), null));
+    }
+
+    @Test
+    public void testSimpleBlock() {
+        ListStmt statements = new ListStmt();
+        ListItem vars = new ListItem();
+        vars.add(new SNoInit("var1"));
+        statements.add(new SDecl(new TInt(), vars));
+        SBStmt blockStmt = new SBStmt(new Block(statements));
+
+        // already visible ids
+        Set<String> visibleIds = new HashSet<String>();
+        visibleIds.add("var1");
+
+        Set<VisibilityError> errors = blockStmt.accept(new StatementVC(), visibleIds);
+
+        assertEquals(new HashSet<VisibilityError>(), errors);
+
     }
 
 }

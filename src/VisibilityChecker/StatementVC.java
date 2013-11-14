@@ -1,6 +1,9 @@
 package VisibilityChecker;
 
 import Latte.Absyn.*;
+import VisibilityChecker.Errors.DuplicatedIdentifier;
+import VisibilityChecker.Errors.IdentifierNotVisible;
+import VisibilityChecker.Errors.VisibilityError;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,14 +15,14 @@ import java.util.Set;
  * Time: 12:09 AM
  * To change this template use File | Settings | File Templates.
  */
-public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<String>> {
+public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, State> {
 
     @Override
-    public Set<VisibilityError> visit(SBStmt p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SBStmt p, State visibleIds) {
         // we have to create a copy of visibleIds, so the identifiers
         // visible within the block won't be visible outside
-        Set<String> visibleIdsCopy = new HashSet<String>();
-        visibleIdsCopy.addAll(visibleIds);
+        State visibleIdsCopy = new State();
+        visibleIdsCopy.putAll(visibleIds);
 
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         errors.addAll(p.block_.accept(new BlockVC(), visibleIdsCopy));
@@ -27,12 +30,12 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SEmpty p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SEmpty p, State visibleIds) {
         return null;
     }
 
     @Override
-    public Set<VisibilityError> visit(SDecl p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SDecl p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         for(Item item : p.listitem_) {
             String identifier;
@@ -47,9 +50,10 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
                 throw new UnsupportedClassVersionError(item.getClass().toString());
             }
 
-            if (visibleIds.contains(identifier)) {
+            if (visibleIds.containsKey(identifier)) {
                 errors.add(new DuplicatedIdentifier(identifier));
             } else {
+                visibleIds.get(identifier).add()
                 visibleIds.add(identifier);
             }
         }
@@ -57,7 +61,7 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SAss p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SAss p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         if (!visibleIds.contains(p.ident_)) {
             errors.add(new IdentifierNotVisible(p.ident_));
@@ -68,7 +72,7 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SIncr p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SIncr p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         if (!visibleIds.contains(p.ident_)) {
             errors.add(new IdentifierNotVisible(p.ident_));
@@ -77,7 +81,7 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SDecr p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SDecr p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         if (!visibleIds.contains(p.ident_)) {
             errors.add(new IdentifierNotVisible(p.ident_));
@@ -86,19 +90,19 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SRet p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SRet p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
         return errors;
     }
 
     @Override
-    public Set<VisibilityError> visit(SVRet p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SVRet p, State visibleIds) {
         return null;
     }
 
     @Override
-    public Set<VisibilityError> visit(SCond p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SCond p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
         errors.addAll(p.stmt_.accept(this, visibleIds));
@@ -106,7 +110,7 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SCondElse p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SCondElse p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
         errors.addAll(p.stmt_1.accept(this, visibleIds));
@@ -115,7 +119,7 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SWhile p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SWhile p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
         errors.addAll(p.stmt_.accept(this, visibleIds));
@@ -123,7 +127,7 @@ public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, Set<Strin
     }
 
     @Override
-    public Set<VisibilityError> visit(SExp p, Set<String> visibleIds) {
+    public Set<VisibilityError> visit(SExp p, State visibleIds) {
         Set<VisibilityError> errors = new HashSet<VisibilityError>();
         errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
         return errors;

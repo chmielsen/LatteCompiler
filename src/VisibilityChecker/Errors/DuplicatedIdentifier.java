@@ -1,4 +1,4 @@
-package VisibilityChecker;
+package VisibilityChecker.Errors;
 
 /**
  * Created with IntelliJ IDEA.

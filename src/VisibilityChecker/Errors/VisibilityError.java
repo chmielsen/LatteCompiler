@@ -1,4 +1,4 @@
-package VisibilityChecker;
+package VisibilityChecker.Errors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -7,7 +7,7 @@ package VisibilityChecker;
  * Time: 10:22 PM
  * To change this template use File | Settings | File Templates.
  */
-public class VisibilityError {
+public class VisibilityError implements SemanticError {
     protected String id;
 
     public VisibilityError(String id) {

@@ -1,6 +1,7 @@
 package FunctionRecognizer;
 
 import Latte.Absyn.ListType;
+import Latte.Absyn.TFun;
 import Latte.Absyn.Type;
 import Latte.PrettyPrinter;
 
@@ -15,9 +16,17 @@ public class FunctionSignature {
     public Type returnType;
     public ListType argumentTypes;
 
+    static public FunctionSignature fromTFun(TFun fun) {
+        return new FunctionSignature(fun.type_, fun.listtype_);
+    }
+
     public FunctionSignature(Type returnType, ListType argumentTypes) {
         this.returnType = returnType;
         this.argumentTypes = argumentTypes;
+    }
+
+    public TFun toParserType () {
+        return new TFun(returnType, argumentTypes);
     }
 
     @Override

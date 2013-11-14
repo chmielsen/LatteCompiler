@@ -1,6 +1,9 @@
-package VisibilityChecker;
+package VisibilityChecker.Unittests;
 
 import Latte.Absyn.EVar;
+import VisibilityChecker.Errors.IdentifierNotVisible;
+import VisibilityChecker.Errors.VisibilityError;
+import VisibilityChecker.ExpressionVC;
 import org.junit.Test;
 
 import java.util.HashSet;

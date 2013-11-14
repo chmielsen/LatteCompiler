@@ -1,4 +1,4 @@
-package VisibilityChecker;
+package VisibilityChecker.Errors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,7 +9,7 @@ package VisibilityChecker;
  */
 public class IdentifierNotVisible extends VisibilityError {
 
-    IdentifierNotVisible(String id) {
+    public IdentifierNotVisible(String id) {
         super(id);
     }
 
