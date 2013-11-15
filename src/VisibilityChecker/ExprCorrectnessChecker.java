@@ -10,27 +10,33 @@ import java.util.ListIterator;
  * the type of the expression will be returned.
  */
 public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Type>, State> {
+
+    public static TInt INT = new TInt();
+
+    public static TStr STRING = new TStr();
+
+    public static TBool BOOL = new TBool();
     @Override
     public SemanticAnalysis<Type> visit(EVar expr, State state) {
         if (!state.hasId(expr.ident_)) {
-            createSemanticAnalysis(new IdentifierNotVisible(expr.ident_));
+            return createSemanticAnalysis(new IdentifierNotVisible(expr.ident_));
         }
         return createSemanticAnalysis(state.getIdentifierType(expr.ident_));
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitInt expr, State state) {
-        return null;
+        return createSemanticAnalysis(INT);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitTrue expr, State state) {
-        return null;
+        return createSemanticAnalysis(BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitFalse expr, State state) {
-        return null;
+        return createSemanticAnalysis(BOOL);
     }
 
     @Override
@@ -74,61 +80,115 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
                     semanticAnalysis.getErrors().add(new TypeError(signatureType, argumentType));
                 }
             }
+            // set function return type, because it passes the analysis
+            semanticAnalysis.setT(functionType.type_);
             return semanticAnalysis;
         }
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EString expr, State state) {
-        return null;
+        return createSemanticAnalysis(STRING);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(Neg expr, State state) {
-        // Check here for returned type and if Neg is applicalbe
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        SemanticAnalysis<Type> analysis = expr.expr_.accept(new ExprCorrectnessChecker(), state);
+        if (analysis.hasErrors()) {
+            return analysis;
+        } else {
+            if (!analysis.getT().equals(INT)) {
+                // Only ints can have '-' beore them
+                return createSemanticAnalysis(new TypeError(INT, analysis.getT()));
+            } else {
+                return analysis;
+            }
+        }
     }
 
     @Override
     public SemanticAnalysis<Type> visit(Not expr, State state) {
-        // Check here for returned type and if Not is applicalbe
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        SemanticAnalysis<Type> analysis = expr.expr_.accept(new ExprCorrectnessChecker(), state);
+        if (analysis.hasErrors()) {
+            return analysis;
+        } else {
+            if (!analysis.getT().equals(BOOL)) {
+                // Only bools can have '!' beore them
+                return createSemanticAnalysis(new TypeError(BOOL, analysis.getT()));
+            } else {
+                return analysis;
+            }
+        }
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EMul expr, State state) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return checkExprsTypes(state, expr.expr_1, expr.expr_2, INT);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EAdd expr, State state) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        SemanticAnalysis<Type> analysis = checkExprsSameType(state, expr.expr_1, expr.expr_2);
+        if (analysis.hasErrors()) {
+            return analysis;
+        } else if (analysis.getT().equals(INT) || analysis.getT().equals(STRING)){
+            return analysis;
+        } else {
+            return createSemanticAnalysis(new TypeError(INT, analysis.getT()));
+        }
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ERel expr, State state) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return checkExprsSameType(state, expr.expr_1, expr.expr_2);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EAnd expr, State state) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return checkExprsTypes(state, expr.expr_1, expr.expr_2, BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EOr expr, State state) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return checkExprsTypes(state, expr.expr_1, expr.expr_2, BOOL);
     }
 
-    private SemanticAnalysis<Type> createSemanticAnalysis(Type type) {
+    public static SemanticAnalysis<Type> createSemanticAnalysis(Type type) {
         SemanticAnalysis<Type> semanticAnalysis = new SemanticAnalysis<Type>();
         semanticAnalysis.setT(type);
         return semanticAnalysis;
     }
 
-    private SemanticAnalysis<Type> createSemanticAnalysis(SemanticError error) {
+    public static SemanticAnalysis<Type> createSemanticAnalysis(SemanticError error) {
         SemanticAnalysis<Type> semanticAnalysis = new SemanticAnalysis<Type>();
         semanticAnalysis.getErrors().add(error);
         return semanticAnalysis;
+    }
+
+    private SemanticAnalysis<Type> checkExprsSameType(State state, Expr expr1, Expr expr2) {
+        SemanticAnalysis<Type> analysisExpr1 = expr1.accept(this, state);
+        SemanticAnalysis<Type> analysisExpr2 = expr2.accept(this, state);
+
+        if (analysisExpr1.hasErrors()) {
+            return analysisExpr1;
+        } else if (analysisExpr2.hasErrors()) {
+            return analysisExpr2;
+        } else if (!analysisExpr1.getT().equals(analysisExpr2.getT())) {
+            return createSemanticAnalysis(new TypeError(analysisExpr1.getT(), analysisExpr2.getT()));
+        } else {
+            // no errors, just passing type
+            return analysisExpr1;
+        }
+    }
+
+    private SemanticAnalysis<Type> checkExprsTypes(State state, Expr expr1, Expr expr2, Type expected) {
+        SemanticAnalysis<Type> analysis = checkExprsSameType(state, expr1, expr2);
+        if (analysis.hasErrors()) {
+            return analysis;
+        } else if (!expected.equals(analysis.getT())) {
+            return createSemanticAnalysis(new TypeError(expected, analysis.getT()));
+        } else {
+            return analysis;
+        }
     }
 }

@@ -1,15 +1,17 @@
 package VisibilityChecker.Unittests;
 
+import FunctionRecognizer.FunctionSignature;
 import Latte.Absyn.*;
 import VisibilityChecker.Errors.DuplicatedIdentifier;
 import VisibilityChecker.Errors.IdentifierNotVisible;
 import VisibilityChecker.Errors.VisibilityError;
+import VisibilityChecker.State;
 import VisibilityChecker.StatementVC;
+import VisibilityChecker.VariableDefinition;
 import junit.framework.Assert;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -30,8 +32,8 @@ public class StatementVCTest {
         SDecl declaration = new SDecl(null,declarationItems);
 
 
-        Stmt.Visitor<Set<VisibilityError>, Set<String>>  visitor = new StatementVC();
-        Set<VisibilityError> errors = visitor.visit(declaration, new HashSet<String>());
+        Stmt.Visitor<Set<VisibilityError>, State>  visitor = new StatementVC();
+        Set<VisibilityError> errors = visitor.visit(declaration, new State());
 
         Assert.assertEquals(0, errors.size());
     }
@@ -45,8 +47,8 @@ public class StatementVCTest {
         SDecl declaration = new SDecl(null,declarationItems);
 
 
-        Stmt.Visitor<Set<VisibilityError>, Set<String>>  visitor = new StatementVC();
-        Set<VisibilityError> errors = visitor.visit(declaration, new HashSet<String>());
+        Stmt.Visitor<Set<VisibilityError>, State>  visitor = new StatementVC();
+        Set<VisibilityError> errors = visitor.visit(declaration, new State());
 
         Set<VisibilityError> expectedErrors = new HashSet<VisibilityError>();
         expectedErrors.add(new DuplicatedIdentifier("id"));
@@ -60,8 +62,8 @@ public class StatementVCTest {
         declarationItems.add(new SInit("id", expression));
         SDecl declaration = new SDecl(null,declarationItems);
 
-        Stmt.Visitor<Set<VisibilityError>, Set<String>>  visitor = new StatementVC();
-        Set<VisibilityError> errors = visitor.visit(declaration, new HashSet<String>());
+        Stmt.Visitor<Set<VisibilityError>, State>  visitor = new StatementVC();
+        Set<VisibilityError> errors = visitor.visit(declaration, new State());
 
         Set<VisibilityError> expectedErrors = new HashSet<VisibilityError>();
         expectedErrors.add(new IdentifierNotVisible("missingId"));
@@ -83,10 +85,11 @@ public class StatementVCTest {
         SBStmt blockStmt = new SBStmt(new Block(statements));
 
         // already visible ids
-        Set<String> visibleIds = new HashSet<String>();
-        visibleIds.add("var1");
+        Map<String, List<VariableDefinition>> visibleIds = new HashMap<String, List<VariableDefinition>>();
+        visibleIds.put("var1", null);
 
-        Set<VisibilityError> errors = blockStmt.accept(new StatementVC(), visibleIds);
+        Set<VisibilityError> errors = blockStmt.accept(new StatementVC(), new State(null, visibleIds,
+                new HashMap<String, FunctionSignature>()));
 
         assertEquals(new HashSet<VisibilityError>(), errors);
 

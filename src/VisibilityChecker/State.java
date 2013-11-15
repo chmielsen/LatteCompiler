@@ -15,7 +15,7 @@ import java.util.Map;
  * Time: 6:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class State {
+public class State implements Cloneable {
 
     private Block currentBlock;
     private Map<String, List<VariableDefinition>> declaredIds;
@@ -44,6 +44,7 @@ public class State {
     public Type getIdentifierType(String id) {
         if (declaredIds.containsKey(id)) {
             List<VariableDefinition> varDefs = declaredIds.get(id);
+            assert (varDefs.size() > 0);
             return varDefs.get(varDefs.size() - 1).getType();
         } else if (declaredFunctions.containsKey(id)) {
             return declaredFunctions.get(id).toParserType();
@@ -85,4 +86,12 @@ public class State {
                 '}';
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Map<String, FunctionSignature> functionsCopy = new HashMap<String, FunctionSignature>();
+        functionsCopy.putAll(declaredFunctions);
+        Map<String, List<VariableDefinition>> variablesCopy = new HashMap<String, List<VariableDefinition>>();
+        variablesCopy.putAll(declaredIds);
+        return new State(currentBlock, variablesCopy, functionsCopy);
+    }
 }

@@ -3,10 +3,14 @@ package VisibilityChecker;
 import Latte.Absyn.*;
 import VisibilityChecker.Errors.DuplicatedIdentifier;
 import VisibilityChecker.Errors.IdentifierNotVisible;
+import VisibilityChecker.Errors.TypeError;
 import VisibilityChecker.Errors.VisibilityError;
 
+import javax.print.DocFlavor;
 import java.util.HashSet;
 import java.util.Set;
+
+import static VisibilityChecker.ExprCorrectnessChecker.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,122 +19,120 @@ import java.util.Set;
  * Time: 12:09 AM
  * To change this template use File | Settings | File Templates.
  */
-public class StatementVC implements Stmt.Visitor<Set<VisibilityError>, State> {
+public class StatementVC implements Stmt.Visitor<SemanticAnalysis, State> {
 
     @Override
-    public Set<VisibilityError> visit(SBStmt p, State visibleIds) {
-        // we have to create a copy of visibleIds, so the identifiers
-        // visible within the block won't be visible outside
-        State visibleIdsCopy = new State();
-        visibleIdsCopy.putAll(visibleIds);
-
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        errors.addAll(p.block_.accept(new BlockVC(), visibleIdsCopy));
-        return errors;
+    public SemanticAnalysis visit(SBStmt p, State state) {
+        try {
+            State visibleIdsCopy = (State)state.clone();
+            return p.block_.accept(new BlockVC(), visibleIdsCopy);
+        } catch (CloneNotSupportedException e) {
+            throw new UnsupportedOperationException(e);
+        }
     }
 
     @Override
-    public Set<VisibilityError> visit(SEmpty p, State visibleIds) {
+    public SemanticAnalysis visit(SEmpty p, State state) {
         return null;
     }
 
     @Override
-    public Set<VisibilityError> visit(SDecl p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
+    public SemanticAnalysis visit(SDecl p, State state) {
+        SemanticAnalysis analysis = new SemanticAnalysis();
         for(Item item : p.listitem_) {
             String identifier;
             // Cast to get the identifier
             if (item instanceof SInit) {
                 identifier = ((SInit) item).ident_;
-                Set<VisibilityError> exprErrors = ((SInit) item).expr_.accept(new ExpressionVC(), visibleIds);
-                errors.addAll(exprErrors);
+                SemanticAnalysis exprAnalysis = ((SInit) item).expr_.accept(new ExprCorrectnessChecker(), state);
+                analysis.merge(exprAnalysis);
             } else if (item instanceof SNoInit) {
                 identifier = ((SNoInit) item).ident_;
             } else {
                 throw new UnsupportedClassVersionError(item.getClass().toString());
             }
 
-            if (visibleIds.containsKey(identifier)) {
-                errors.add(new DuplicatedIdentifier(identifier));
+            if (state.hasId(identifier)) {
+                analysis.getErrors().add(new DuplicatedIdentifier(identifier));
             } else {
-                visibleIds.get(identifier).add()
-                visibleIds.add(identifier);
+                // TODO
             }
         }
-        return errors;
+        return analysis;
     }
 
     @Override
-    public Set<VisibilityError> visit(SAss p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        if (!visibleIds.contains(p.ident_)) {
-            errors.add(new IdentifierNotVisible(p.ident_));
-        }
-        // check for visibility errors in assigned expression
-        errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
-        return errors;
-    }
-
-    @Override
-    public Set<VisibilityError> visit(SIncr p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        if (!visibleIds.contains(p.ident_)) {
-            errors.add(new IdentifierNotVisible(p.ident_));
-        }
-        return errors;
-    }
-
-    @Override
-    public Set<VisibilityError> visit(SDecr p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        if (!visibleIds.contains(p.ident_)) {
-            errors.add(new IdentifierNotVisible(p.ident_));
-        }
-        return errors;
-    }
-
-    @Override
-    public Set<VisibilityError> visit(SRet p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
-        return errors;
-    }
-
-    @Override
-    public Set<VisibilityError> visit(SVRet p, State visibleIds) {
+    public SemanticAnalysis visit(SAss p, State state) {
+        // bloki
         return null;
     }
 
     @Override
-    public Set<VisibilityError> visit(SCond p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
-        errors.addAll(p.stmt_.accept(this, visibleIds));
-        return errors;
+    public SemanticAnalysis visit(SIncr p, State state) {
+        if (!state.hasId(p.ident_)) {
+            return createSemanticAnalysis(new IdentifierNotVisible(p.ident_));
+        } else if (INT.equals(state.getIdentifierType(p.ident_))) {
+            return createSemanticAnalysis(new TypeError(INT, state.getIdentifierType(p.ident_)));
+        } else {
+            return new SemanticAnalysis();
+        }
     }
 
     @Override
-    public Set<VisibilityError> visit(SCondElse p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
-        errors.addAll(p.stmt_1.accept(this, visibleIds));
-        errors.addAll(p.stmt_2.accept(this, visibleIds));
-        return errors;
+    public SemanticAnalysis visit(SDecr p, State state) {
+        if (!state.hasId(p.ident_)) {
+            return createSemanticAnalysis(new IdentifierNotVisible(p.ident_));
+        } else if (INT.equals(state.getIdentifierType(p.ident_))) {
+            return createSemanticAnalysis(new TypeError(INT, state.getIdentifierType(p.ident_)));
+        } else {
+            return new SemanticAnalysis();
+        }
     }
 
     @Override
-    public Set<VisibilityError> visit(SWhile p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
-        errors.addAll(p.stmt_.accept(this, visibleIds));
-        return errors;
+    public SemanticAnalysis visit(SRet p, State state) {
+        SemanticAnalysis<Type> exprAnalysis = p.expr_.accept(new ExprCorrectnessChecker(), state);
+        SemanticAnalysis analysis = new SemanticAnalysis();
+        analysis.setErrors(exprAnalysis.getErrors());
+        return analysis;
     }
 
     @Override
-    public Set<VisibilityError> visit(SExp p, State visibleIds) {
-        Set<VisibilityError> errors = new HashSet<VisibilityError>();
-        errors.addAll(p.expr_.accept(new ExpressionVC(), visibleIds));
+    public SemanticAnalysis visit(SVRet p, State state) {
+        return new SemanticAnalysis();
+    }
+
+    @Override
+    public SemanticAnalysis visit(SCond p, State state) {
+        return null;
+        /*
+        SemanticAnalysis errors = new HashSemanticAnalysis();
+        errors.addAll(p.expr_.accept(new ExpressionVC(), state));
+        errors.addAll(p.stmt_.accept(this, state));
         return errors;
+        */
+    }
+
+    @Override
+    public SemanticAnalysis visit(SCondElse p, State state) {
+        /*
+        SemanticAnalysis errors = new HashSemanticAnalysis();
+        errors.addAll(p.expr_.accept(new ExpressionVC(), state));
+        errors.addAll(p.stmt_1.accept(this, state));
+        errors.addAll(p.stmt_2.accept(this, state));
+        return errors;
+        */
+        return null;
+    }
+
+    @Override
+    public SemanticAnalysis visit(SWhile p, State state) {
+        return null;
+    }
+
+    @Override
+    public SemanticAnalysis visit(SExp p, State state) {
+        return null;
     }
 
 }

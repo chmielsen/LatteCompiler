@@ -14,14 +14,14 @@ import java.util.Set;
  * Time: 12:05 AM
  * To change this template use File | Settings | File Templates.
  */
-public class BlockVC implements Block.Visitor<Set<VisibilityError>, State> {
+public class BlockVC implements Block.Visitor<SemanticAnalysis, State> {
     @Override
-    public Set<VisibilityError> visit(Block block, State visibleIds) {
-        Set<VisibilityError> visibilityErrors = new HashSet<VisibilityError>();
+    public SemanticAnalysis visit(Block block, State state) {
+        SemanticAnalysis analysis = new SemanticAnalysis();
         for (Stmt statement : block.liststmt_) {
-            visibilityErrors.addAll(statement.accept(new StatementVC(), visibleIds));
+            analysis.merge(statement.accept(new StatementVC(), state));
         }
-        return visibilityErrors;
+        return analysis;
     }
 }
 

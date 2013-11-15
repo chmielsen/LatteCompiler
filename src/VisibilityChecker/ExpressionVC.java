@@ -16,7 +16,7 @@ import java.util.Set;
 public class ExpressionVC implements Expr.Visitor<Set<VisibilityError>, State> {
     @Override
     public Set<VisibilityError> visit(EVar p, State visibleIds) {
-        if (visibleIds.containsKey(p.ident_)) {
+        if (visibleIds.hasId(p.ident_)) {
             return null;
         } else {
             Set<VisibilityError> errorSet = new HashSet<VisibilityError>();
@@ -42,7 +42,7 @@ public class ExpressionVC implements Expr.Visitor<Set<VisibilityError>, State> {
 
     @Override
     public Set<VisibilityError> visit(EApp p, State visibleIds) {
-        if (visibleIds.containsKey(p.ident_)) {
+        if (visibleIds.hasId(p.ident_)) {
              return null;
         } else {
             Set<VisibilityError> errorSet = new HashSet<VisibilityError>();
