@@ -1,11 +1,17 @@
 package FunctionRecognizer.Errors;
 
 /**
- * Created with IntelliJ IDEA.
- * User: wojtek
- * Date: 11/13/13
- * Time: 4:23 PM
- * To change this template use File | Settings | File Templates.
+ * Class representing error occuring on non empty return
+ * statements in functions returning type void
  */
-public class NonEmptyReturnOnVoid {
+public class NonEmptyReturnOnVoid extends ReturnError {
+
+    NonEmptyReturnOnVoid (String functionId) {
+        super(functionId);
+    }
+
+    @Override
+    public String toString() {
+       return "Function \'" + functionId + "/' is type void, but has a non empty return";
+    }
 }

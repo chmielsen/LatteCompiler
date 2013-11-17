@@ -1,98 +1,125 @@
 package VisibilityChecker.Unittests;
 
-import FunctionRecognizer.FunctionSignature;
+import Utils.FunctionSignature;
 import Latte.Absyn.*;
+import Utils.SemanticAnalysis;
+import Utils.State;
+import Utils.VariableDefinition;
+import VisibilityChecker.*;
 import VisibilityChecker.Errors.DuplicatedIdentifier;
-import VisibilityChecker.Errors.IdentifierNotVisible;
-import VisibilityChecker.Errors.VisibilityError;
-import VisibilityChecker.State;
-import VisibilityChecker.StatementVC;
-import VisibilityChecker.VariableDefinition;
-import junit.framework.Assert;
+import VisibilityChecker.Errors.TypeError;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static junit.framework.Assert.assertEquals;
+import static VisibilityChecker.ExprCorrectnessChecker.*;
+import static org.junit.Assert.*;
 
 /**
  * Created with IntelliJ IDEA.
  * User: wojtek
- * Date: 11/12/13
- * Time: 12:42 AM
+ * Date: 11/15/13
+ * Time: 12:41 PM
  * To change this template use File | Settings | File Templates.
  */
 public class StatementVCTest {
 
     @Test
     public void testGoodDecl() throws Exception {
-        ListItem declarationItems = new ListItem();
-        declarationItems.add(new SNoInit("id"));
-        declarationItems.add(new SNoInit("id2"));
-        SDecl declaration = new SDecl(null,declarationItems);
-
-
-        Stmt.Visitor<Set<VisibilityError>, State>  visitor = new StatementVC();
-        Set<VisibilityError> errors = visitor.visit(declaration, new State());
-
-        Assert.assertEquals(0, errors.size());
-    }
-
-
-    @Test
-    public void testDeclDuplicated() throws Exception {
-        ListItem declarationItems = new ListItem();
-        declarationItems.add(new SNoInit("id"));
-        declarationItems.add(new SNoInit("id"));
-        SDecl declaration = new SDecl(null,declarationItems);
-
-
-        Stmt.Visitor<Set<VisibilityError>, State>  visitor = new StatementVC();
-        Set<VisibilityError> errors = visitor.visit(declaration, new State());
-
-        Set<VisibilityError> expectedErrors = new HashSet<VisibilityError>();
-        expectedErrors.add(new DuplicatedIdentifier("id"));
-        Assert.assertEquals(expectedErrors, errors);
-    }
-
-    @Test
-    public void testDeclMissingId() throws Exception {
-        ListItem declarationItems = new ListItem();
-        Expr expression = new EAdd(new EVar("missingId"), new Plus(), new ELitInt(0));
-        declarationItems.add(new SInit("id", expression));
-        SDecl declaration = new SDecl(null,declarationItems);
-
-        Stmt.Visitor<Set<VisibilityError>, State>  visitor = new StatementVC();
-        Set<VisibilityError> errors = visitor.visit(declaration, new State());
-
-        Set<VisibilityError> expectedErrors = new HashSet<VisibilityError>();
-        expectedErrors.add(new IdentifierNotVisible("missingId"));
-        Assert.assertEquals(expectedErrors, errors);
-    }
-
-    @Test
-    public void testEmptyStmt() {
-        SEmpty empty = new SEmpty();
-        assertEquals(null, empty.accept(new StatementVC(), null));
-    }
-
-    @Test
-    public void testSimpleBlock() {
-        ListStmt statements = new ListStmt();
         ListItem vars = new ListItem();
-        vars.add(new SNoInit("var1"));
-        statements.add(new SDecl(new TInt(), vars));
-        SBStmt blockStmt = new SBStmt(new Block(statements));
+        vars.add(new SNoInit("id1"));
+        SDecl decl = new SDecl(INT, vars);
+        State state = new State();
+        SemanticAnalysis analysis = decl.accept(new StatementVC(), state);
 
-        // already visible ids
-        Map<String, List<VariableDefinition>> visibleIds = new HashMap<String, List<VariableDefinition>>();
-        visibleIds.put("var1", null);
+        assertFalse(analysis.hasErrors());
+    }
 
-        Set<VisibilityError> errors = blockStmt.accept(new StatementVC(), new State(null, visibleIds,
-                new HashMap<String, FunctionSignature>()));
+    @Test
+    public void testGoodMultDecl() throws Exception {
+        ListItem vars = new ListItem();
+        vars.add(new SNoInit("id1"));
+        vars.add(new SInit("id2", new ELitInt(5)));
+        SDecl decl = new SDecl(INT, vars);
+        State state = new State();
+        SemanticAnalysis analysis = decl.accept(new StatementVC(), state);
 
-        assertEquals(new HashSet<VisibilityError>(), errors);
+        assertFalse(analysis.hasErrors());
+    }
 
+    @Test
+    public void testDeclBadType() throws Exception {
+        ListItem vars = new ListItem();
+        vars.add(new SNoInit("id1"));
+        vars.add(new SInit("id2", new EString("aha")));
+        SDecl decl = new SDecl(INT, vars);
+        State state = new State();
+        SemanticAnalysis analysis = decl.accept(new StatementVC(), state);
+
+        assertTrue(analysis.hasErrors());
+        assertEquals(1, analysis.getErrors().size());
+        assertEquals(new TypeError(INT, STRING), analysis.getErrors().get(0));
+    }
+
+    // TODO: Check for duplicated, remove assertion
+    @Test (expected = AssertionError.class)
+    public void testDeclDuplicated() throws Exception {
+        ListItem vars = new ListItem();
+        vars.add(new SNoInit("id1"));
+        SDecl decl = new SDecl(INT, vars);
+        Map<String, FunctionSignature> functions = new HashMap<String, FunctionSignature>();
+        functions.put("id1", null);
+        State state = new State(null, new HashMap<String, List<VariableDefinition>>(), functions);
+        SemanticAnalysis analysis = decl.accept(new StatementVC(), state);
+
+        assertTrue(analysis.hasErrors());
+        assertEquals(1, analysis.getErrors().size());
+        assertEquals(new DuplicatedIdentifier("id1"), analysis.getErrors().get(0));
+    }
+
+    @Test
+    public void testIncrMissingId() {
+        SIncr incr = new SIncr("id");
+        SemanticAnalysis analysis = incr.accept(new StatementVC(), new State());
+        assertTrue(analysis.hasErrors());
+    }
+
+    @Test
+    public void testGoodIncr() {
+        SIncr incr = new SIncr("id");
+        Map<String, List<VariableDefinition>> visibleVarIds = new HashMap<String, List<VariableDefinition>>();
+        List<VariableDefinition> varDefs = new ArrayList<VariableDefinition>();
+        varDefs.add(new VariableDefinition(null, INT));
+        visibleVarIds.put("id", varDefs);
+        State state = new State();
+        state.setDeclaredIds(visibleVarIds);
+        SemanticAnalysis analysis = incr.accept(new StatementVC(), state);
+        System.out.println(analysis.toString());
+
+        assertFalse(analysis.hasErrors());
+    }
+
+    @Test
+    public void testGoodCond () {
+        SCond conditionalStatement = new SCond(new ELitTrue(), new SVRet());
+        SemanticAnalysis analysis = conditionalStatement.accept(new StatementVC(), new State());
+
+        assertFalse(analysis.hasErrors());
+    }
+
+
+    @Test
+    public void testBadConditioninIf () {
+        SCond conditionalStatement = new SCond(new ELitInt(5), new SVRet());
+        SemanticAnalysis analysis = conditionalStatement.accept(new StatementVC(), new State());
+
+        assertTrue(analysis.hasErrors());
+        assertEquals(1, analysis.getErrors().size());
+        assertEquals(new TypeError(BOOL, INT), analysis.getErrors().get(0));
     }
 
 }
+

@@ -2,10 +2,8 @@ package VisibilityChecker;
 
 import Latte.Absyn.Block;
 import Latte.Absyn.Stmt;
-import VisibilityChecker.Errors.VisibilityError;
-
-import java.util.HashSet;
-import java.util.Set;
+import Utils.SemanticAnalysis;
+import Utils.State;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,9 +15,10 @@ import java.util.Set;
 public class BlockVC implements Block.Visitor<SemanticAnalysis, State> {
     @Override
     public SemanticAnalysis visit(Block block, State state) {
+        state.setCurrentBlock(block);
         SemanticAnalysis analysis = new SemanticAnalysis();
         for (Stmt statement : block.liststmt_) {
-            analysis.merge(statement.accept(new StatementVC(), state));
+            analysis = analysis.merge(statement.accept(new StatementVC(), state));
         }
         return analysis;
     }

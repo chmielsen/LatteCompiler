@@ -1,4 +1,4 @@
-package VisibilityChecker;
+package Utils;
 
 import Latte.Absyn.Type;
 import VisibilityChecker.Errors.SemanticError;
@@ -25,8 +25,24 @@ public class SemanticAnalysis<T> {
        errors = new ArrayList<SemanticError>();
     }
 
+    public static SemanticAnalysis createSemanticAnalysis(Type type) {
+        SemanticAnalysis<Type> semanticAnalysis = new SemanticAnalysis<Type>();
+        semanticAnalysis.setT(type);
+        return semanticAnalysis;
+    }
+
+    public static <E> SemanticAnalysis<E> createSemanticAnalysis(SemanticError error) {
+        SemanticAnalysis<E> semanticAnalysis = new SemanticAnalysis<E>();
+        semanticAnalysis.getErrors().add(error);
+        return semanticAnalysis;
+    }
+
     public boolean hasErrors() {
         return !errors.isEmpty();
+    }
+
+    public <E> void addErrors(SemanticAnalysis<E> analysis) {
+        errors.addAll(analysis.getErrors());
     }
 
     public SemanticAnalysis<T> merge(SemanticAnalysis<T> semanticAnalysis) {
@@ -35,18 +51,21 @@ public class SemanticAnalysis<T> {
         } else if (hasErrors() || semanticAnalysis.hasErrors()) {
             errors.addAll(semanticAnalysis.getErrors());
             return this;
-        } else if (semanticAnalysis.getT().equals(this.t)) {
+        } else if (t == null) {
+            return semanticAnalysis;
+        } else if (semanticAnalysis.getT() == null) {
+            return this;
+        } else if (t.equals(semanticAnalysis.getT())) {
             return this;
         } else {
             if (t instanceof Type && semanticAnalysis.getT() instanceof Type) {
+                System.out.println("FAFAFKAFAKFAK");
                 errors.add(new TypeError((Type)semanticAnalysis.getT(), (Type)t));
-            } else {
-                errors.add(new SemanticError() {
-                    @Override
-                    public String toString() {
-                        return "Something is fucked up.";
-                    }
-                });
+            } else if (t instanceof Type) {
+                // return the one with type
+                return this;
+            } else if (semanticAnalysis.getT() instanceof Type) {
+                return semanticAnalysis;
             }
             return this;
         }
@@ -95,4 +114,7 @@ public class SemanticAnalysis<T> {
                 ", errors=" + errors +
                 '}';
     }
+
+
+
 }

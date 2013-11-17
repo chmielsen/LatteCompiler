@@ -1,4 +1,4 @@
-package VisibilityChecker;
+package Utils;
 
 import Latte.Absyn.Block;
 import Latte.Absyn.Type;

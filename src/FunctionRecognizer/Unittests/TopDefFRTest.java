@@ -1,6 +1,10 @@
-package FunctionRecognizer;
+package FunctionRecognizer.Unittests;
 
+import FunctionRecognizer.TopDefFR;
 import Latte.Absyn.*;
+import Utils.FunctionSignature;
+import Utils.SemanticAnalysis;
+import Utils.State;
 import org.junit.Test;
 
 import java.util.AbstractMap;
@@ -27,16 +31,15 @@ public class TopDefFRTest {
         FnDef fnDef = new FnDef(new TInt(), IDENTIFIER, listArg, null);
         TopDefFR topDefTypeRecognizer = new TopDefFR();
 
-        Map.Entry<String, FunctionSignature> result = topDefTypeRecognizer.visit(fnDef, null);
+        State state = new State();
+        SemanticAnalysis analysis = topDefTypeRecognizer.visit(fnDef, state);
 
         ListType expectedTypeList = new ListType();
         expectedTypeList.add(new TStr());
         expectedTypeList.add(new TInt());
         FunctionSignature expectedSignature = new FunctionSignature(new TInt(), expectedTypeList);
-        String expectedIdent = IDENTIFIER;
-        Map.Entry<String, FunctionSignature> expectedEntry = new AbstractMap.SimpleEntry<String, FunctionSignature>(expectedIdent, expectedSignature);
 
-        assertEquals(expectedEntry, result);
+        assertEquals(expectedSignature, state.getDeclaredFunctions().get(IDENTIFIER));
 
     }
 }

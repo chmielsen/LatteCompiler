@@ -1,6 +1,8 @@
 package VisibilityChecker;
 
 import Latte.Absyn.*;
+import Utils.SemanticAnalysis;
+import Utils.State;
 import VisibilityChecker.Errors.*;
 
 import java.util.ListIterator;
@@ -16,42 +18,45 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
     public static TStr STRING = new TStr();
 
     public static TBool BOOL = new TBool();
+
+    public static TVoid VOID = new TVoid();
+
     @Override
     public SemanticAnalysis<Type> visit(EVar expr, State state) {
         if (!state.hasId(expr.ident_)) {
-            return createSemanticAnalysis(new IdentifierNotVisible(expr.ident_));
+            return SemanticAnalysis.createSemanticAnalysis(new IdentifierNotVisible(expr.ident_));
         }
-        return createSemanticAnalysis(state.getIdentifierType(expr.ident_));
+        return SemanticAnalysis.createSemanticAnalysis(state.getIdentifierType(expr.ident_));
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitInt expr, State state) {
-        return createSemanticAnalysis(INT);
+        return SemanticAnalysis.createSemanticAnalysis(INT);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitTrue expr, State state) {
-        return createSemanticAnalysis(BOOL);
+        return SemanticAnalysis.createSemanticAnalysis(BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitFalse expr, State state) {
-        return createSemanticAnalysis(BOOL);
+        return SemanticAnalysis.createSemanticAnalysis(BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EApp expr, State state) {
         if (!state.hasId(expr.ident_)) {
-            return createSemanticAnalysis(new IdentifierNotVisible(expr.ident_));
+            return SemanticAnalysis.createSemanticAnalysis(new IdentifierNotVisible(expr.ident_));
         } else if (!state.isFunction(expr.ident_)) {
-            return createSemanticAnalysis(new VariableApplicationError(expr.ident_));
+            return SemanticAnalysis.createSemanticAnalysis(new VariableApplicationError(expr.ident_));
         } else {
             // get signature we have in state
             TFun functionType = (TFun)state.getIdentifierType(expr.ident_);
             // compare number of arguments
             if (functionType.listtype_.size() != expr.listexpr_.size()) {
                 // stop comapring here, maybe user choosed bad function
-                return createSemanticAnalysis(new WrongNumberOfArguments(expr.ident_));
+                return SemanticAnalysis.createSemanticAnalysis(new WrongNumberOfArguments(expr.ident_));
             }
 
             // compare argument types
@@ -61,7 +66,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
                 SemanticAnalysis<Type> argumentAnalysis =
                         argument.accept(new ExprCorrectnessChecker(), state);
                 if (argumentAnalysis.hasErrors()) {
-                    semanticAnalysis.merge(argumentAnalysis);
+                    semanticAnalysis = semanticAnalysis.merge(argumentAnalysis);
                 }
                 argumentTypes.add(argumentAnalysis.getT());
             }
@@ -88,7 +93,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
 
     @Override
     public SemanticAnalysis<Type> visit(EString expr, State state) {
-        return createSemanticAnalysis(STRING);
+        return SemanticAnalysis.createSemanticAnalysis(STRING);
     }
 
     @Override
@@ -99,7 +104,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         } else {
             if (!analysis.getT().equals(INT)) {
                 // Only ints can have '-' beore them
-                return createSemanticAnalysis(new TypeError(INT, analysis.getT()));
+                return SemanticAnalysis.createSemanticAnalysis(new TypeError(INT, analysis.getT()));
             } else {
                 return analysis;
             }
@@ -114,7 +119,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         } else {
             if (!analysis.getT().equals(BOOL)) {
                 // Only bools can have '!' beore them
-                return createSemanticAnalysis(new TypeError(BOOL, analysis.getT()));
+                return SemanticAnalysis.createSemanticAnalysis(new TypeError(BOOL, analysis.getT()));
             } else {
                 return analysis;
             }
@@ -134,13 +139,25 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         } else if (analysis.getT().equals(INT) || analysis.getT().equals(STRING)){
             return analysis;
         } else {
-            return createSemanticAnalysis(new TypeError(INT, analysis.getT()));
+            // TODO popraw msg
+            return SemanticAnalysis.createSemanticAnalysis(new TypeError(INT, analysis.getT()));
         }
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ERel expr, State state) {
-        return checkExprsSameType(state, expr.expr_1, expr.expr_2);
+        SemanticAnalysis<Type> analysis;
+        if (expr.relop_ instanceof EQU || expr.relop_ instanceof NE) {
+            // can compare any type
+            analysis = checkExprsSameType(state, expr.expr_1, expr.expr_2);
+        } else {
+            // can check which one greater with INT
+            analysis = checkExprsTypes(state, expr.expr_1, expr.expr_2, INT);
+        }
+        if (analysis.hasErrors()) {
+            return analysis;
+        }
+        return SemanticAnalysis.createSemanticAnalysis(BOOL);
     }
 
     @Override
@@ -153,18 +170,6 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         return checkExprsTypes(state, expr.expr_1, expr.expr_2, BOOL);
     }
 
-    public static SemanticAnalysis<Type> createSemanticAnalysis(Type type) {
-        SemanticAnalysis<Type> semanticAnalysis = new SemanticAnalysis<Type>();
-        semanticAnalysis.setT(type);
-        return semanticAnalysis;
-    }
-
-    public static SemanticAnalysis<Type> createSemanticAnalysis(SemanticError error) {
-        SemanticAnalysis<Type> semanticAnalysis = new SemanticAnalysis<Type>();
-        semanticAnalysis.getErrors().add(error);
-        return semanticAnalysis;
-    }
-
     private SemanticAnalysis<Type> checkExprsSameType(State state, Expr expr1, Expr expr2) {
         SemanticAnalysis<Type> analysisExpr1 = expr1.accept(this, state);
         SemanticAnalysis<Type> analysisExpr2 = expr2.accept(this, state);
@@ -174,7 +179,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         } else if (analysisExpr2.hasErrors()) {
             return analysisExpr2;
         } else if (!analysisExpr1.getT().equals(analysisExpr2.getT())) {
-            return createSemanticAnalysis(new TypeError(analysisExpr1.getT(), analysisExpr2.getT()));
+            return SemanticAnalysis.createSemanticAnalysis(new TypeError(analysisExpr1.getT(), analysisExpr2.getT()));
         } else {
             // no errors, just passing type
             return analysisExpr1;
@@ -186,7 +191,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         if (analysis.hasErrors()) {
             return analysis;
         } else if (!expected.equals(analysis.getT())) {
-            return createSemanticAnalysis(new TypeError(expected, analysis.getT()));
+            return SemanticAnalysis.createSemanticAnalysis(new TypeError(expected, analysis.getT()));
         } else {
             return analysis;
         }

@@ -1,4 +1,4 @@
-package FunctionRecognizer;
+package Utils;
 
 import Latte.Absyn.ListType;
 import Latte.Absyn.TFun;

@@ -7,5 +7,10 @@ package FunctionRecognizer.Errors;
  * Time: 4:21 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ReturnError {
+abstract public class ReturnError {
+    String functionId;
+
+    protected ReturnError(String functionId) {
+        this.functionId = functionId;
+    }
 }

@@ -2,6 +2,9 @@ package FunctionRecognizer;
 
 import Latte.Absyn.Program;
 import Latte.Absyn.TopDef;
+import Utils.FunctionSignature;
+import Utils.SemanticAnalysis;
+import Utils.State;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,15 +17,17 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  * TODO: Dodaj sprawdzanie returnow w funkcjach, zmien nazwe pakietu
  */
-public class ProgramFR implements Program.Visitor<Map<String, FunctionSignature>, Object> {
+public class ProgramFR implements Program.Visitor<SemanticAnalysis, State> {
 
     @Override
-    public Map<String, FunctionSignature> visit(Program p, Object arg) {
-        Map<String, FunctionSignature> typeMap = new HashMap<String, FunctionSignature>();
+    public SemanticAnalysis visit(Program p, State state) {
+        SemanticAnalysis analysis = new SemanticAnalysis();
         for (TopDef topDef : p.listtopdef_) {
-            Map.Entry<String, FunctionSignature> idToSignature = topDef.accept(new TopDefFR(), null);
-            typeMap.put(idToSignature.getKey(), idToSignature.getValue());
+            SemanticAnalysis fnAnalysis = topDef.accept(new TopDefFR(), state);
+            if (fnAnalysis.hasErrors()) {
+                analysis = analysis.merge(fnAnalysis);
+            }
         }
-        return typeMap;  //To change body of implemented methods use File | Settings | File Templates.
+        return analysis;
     }
 }

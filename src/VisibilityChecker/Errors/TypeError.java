@@ -12,8 +12,8 @@ import Latte.PrettyPrinter;
  */
 public class TypeError implements SemanticError {
 
-    private Type expected;
-    private Type was;
+    protected Type expected;
+    protected Type was;
 
     public TypeError(Type expected, Type was) {
         this.was = was;

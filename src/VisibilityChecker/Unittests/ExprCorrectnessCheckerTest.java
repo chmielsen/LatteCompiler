@@ -1,14 +1,14 @@
 package VisibilityChecker.Unittests;
 
-import FunctionRecognizer.FunctionSignature;
+import Utils.FunctionSignature;
 import Latte.Absyn.*;
 import VisibilityChecker.Errors.IdentifierNotVisible;
 import VisibilityChecker.Errors.TypeError;
 import VisibilityChecker.Errors.WrongNumberOfArguments;
 import VisibilityChecker.ExprCorrectnessChecker;
-import VisibilityChecker.SemanticAnalysis;
-import VisibilityChecker.State;
-import VisibilityChecker.VariableDefinition;
+import Utils.SemanticAnalysis;
+import Utils.State;
+import Utils.VariableDefinition;
 import org.junit.Test;
 
 import static VisibilityChecker.ExprCorrectnessChecker.*;

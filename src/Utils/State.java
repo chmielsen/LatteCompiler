@@ -1,9 +1,9 @@
-package VisibilityChecker;
+package Utils;
 
-import FunctionRecognizer.FunctionSignature;
 import Latte.Absyn.Block;
 import Latte.Absyn.Type;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +50,19 @@ public class State implements Cloneable {
             return declaredFunctions.get(id).toParserType();
         } else {
             return null;
+        }
+    }
+
+    public void addVarDefinition(String id, Type t) {
+        // Dopisz sprawdzanie czy jest definicja
+        VariableDefinition varDef = new VariableDefinition(getCurrentBlock(), t);
+        if (declaredIds.containsKey(id)) {
+            declaredIds.get(id).add(varDef);
+        } else {
+            // creating 1st definition
+            List<VariableDefinition> listWithFirstDef = new ArrayList<VariableDefinition>();
+            listWithFirstDef.add(varDef);
+            declaredIds.put(id, listWithFirstDef);
         }
     }
 
