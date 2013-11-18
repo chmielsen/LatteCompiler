@@ -1,27 +1,31 @@
-package VisibilityChecker;
+package Checkers;
 
+import Checkers.Errors.*;
 import Latte.Absyn.*;
 import Utils.SemanticAnalysis;
 import Utils.State;
 import Utils.VariableDefinition;
-import VisibilityChecker.Errors.*;
 
 import java.util.List;
 
 import static Utils.SemanticAnalysis.createSemanticAnalysis;
-import static VisibilityChecker.ExprCorrectnessChecker.BOOL;
-import static VisibilityChecker.ExprCorrectnessChecker.INT;
+import static Utils.TypeConstants.BOOL;
+import static Utils.TypeConstants.INT;
 
 /**
- * Analyze sematical correctness of the statements
+ * Class implementing Visitor pattern for the {@link Stmt} in order
+ * to check it's semantical correctness. Each method from {@link Stmt.Visitor}
+ * returns empty {@link SemanticAnalysis} on no errors, otherwise the one with
+ * list of {@link SemanticError}.
  */
-public class StatementVC implements Stmt.Visitor<SemanticAnalysis, State> {
+public class StatementCorrectnessChecker implements Stmt.Visitor<SemanticAnalysis, State> {
 
     @Override
     public SemanticAnalysis visit(SBStmt p, State state) {
         try {
+            // clone state to have local one in block
             State visibleIdsCopy = (State)state.clone();
-            return p.block_.accept(new BlockVC(), visibleIdsCopy);
+            return p.block_.accept(new BlockCorrectnessChecker(), visibleIdsCopy);
         } catch (CloneNotSupportedException e) {
             throw new UnsupportedOperationException(e);
         }
@@ -39,7 +43,6 @@ public class StatementVC implements Stmt.Visitor<SemanticAnalysis, State> {
 
     @Override
     public SemanticAnalysis visit(SAss p, State state) {
-        // TODO: bloki
         if (!state.hasId(p.ident_)) {
             return createSemanticAnalysis(new IdentifierNotVisible(p.ident_));
         } else if (state.getDeclaredFunctions().containsKey(p.ident_)) {
@@ -137,6 +140,16 @@ public class StatementVC implements Stmt.Visitor<SemanticAnalysis, State> {
         return p.expr_.accept(new ExprCorrectnessChecker(), state);
     }
 
+    /**
+     * Checks whether id is already defines in the {@link State}
+     * @param id
+     *          checked id
+     * @param state
+     *          current {@link State}
+     * @return
+     *      empty {@link SemanticAnalysis} on previously not defined,
+     *      filled with {@link SemanticError} otherwise
+     */
     static private SemanticAnalysis checkIfNotDuplicate(String id, State state) {
         if (state.hasId(id)) {
             if (state.isFunction(id)) {
@@ -155,12 +168,23 @@ public class StatementVC implements Stmt.Visitor<SemanticAnalysis, State> {
         return new SemanticAnalysis();
     }
 
-    // add to state if correct declaraion
+    /**
+     * Checks whether {@link SDecl} is semantically correct and
+     * add list of {@link Item} to {@link State}
+     * @param p
+     *          declaration {@link SDecl}
+     * @param state
+     *          current {@link State}
+     * @return
+     *          {@link SemanticAnalysis} with no erros on success,
+     *          filled with {@link SemanticError} otherwise
+     */
     static public SemanticAnalysis<Type> declareVariable(SDecl p, State state) {
         SemanticAnalysis analysis = new SemanticAnalysis();
         for(Item item : p.listitem_) {
             String id;
             if (item instanceof SNoInit) {
+                // No variable initialization
                 id = ((SNoInit) item).ident_;
                 SemanticAnalysis itemAnalysis = checkIfNotDuplicate(id, state);
                 if (itemAnalysis.hasErrors()) {
@@ -168,6 +192,8 @@ public class StatementVC implements Stmt.Visitor<SemanticAnalysis, State> {
                     break;
                 }
             } else { // item instanceof SInit
+                // Variable is being intialized, have to check
+                // the expression
                 id = ((SInit)item).ident_;
                 SemanticAnalysis itemAnalysis = checkIfNotDuplicate(id, state);
                 if (itemAnalysis.hasErrors()) {

@@ -1,23 +1,19 @@
-package VisibilityChecker.Unittests;
+package Checkers.Unittests;
 
-import Utils.FunctionSignature;
+import Checkers.Errors.IdentifierNotVisible;
+import Checkers.Errors.TypeError;
+import Checkers.Errors.WrongNumberOfArguments;
+import Checkers.ExprCorrectnessChecker;
 import Latte.Absyn.*;
-import VisibilityChecker.Errors.IdentifierNotVisible;
-import VisibilityChecker.Errors.TypeError;
-import VisibilityChecker.Errors.WrongNumberOfArguments;
-import VisibilityChecker.ExprCorrectnessChecker;
-import Utils.SemanticAnalysis;
-import Utils.State;
-import Utils.VariableDefinition;
+import Utils.*;
 import org.junit.Test;
-
-import static VisibilityChecker.ExprCorrectnessChecker.*;
-import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -114,7 +110,7 @@ public class ExprCorrectnessCheckerTest {
         Not not = new Not(new ELitTrue());
         SemanticAnalysis<Type> analysis = not.accept(new ExprCorrectnessChecker(), null);
         assertFalse(analysis.hasErrors());
-        assertEquals(BOOL, analysis.getT());
+        assertEquals(TypeConstants.BOOL, analysis.getT());
     }
 
     @Test
@@ -123,7 +119,7 @@ public class ExprCorrectnessCheckerTest {
         SemanticAnalysis<Type> analysis = not.accept(new ExprCorrectnessChecker(), null);
         assertTrue(analysis.hasErrors());
         assertEquals(1, analysis.getErrors().size());
-        assertEquals(new TypeError(BOOL, STRING), analysis.getErrors().get(0));
+        assertEquals(new TypeError(TypeConstants.BOOL, TypeConstants.STRING), analysis.getErrors().get(0));
     }
 
     @Test
@@ -132,7 +128,7 @@ public class ExprCorrectnessCheckerTest {
         SemanticAnalysis<Type> analysis = neg.accept(new ExprCorrectnessChecker(), null);
         assertTrue(analysis.hasErrors());
         assertEquals(1, analysis.getErrors().size());
-        assertEquals(new TypeError(INT, STRING), analysis.getErrors().get(0));
+        assertEquals(new TypeError(TypeConstants.INT, TypeConstants.STRING), analysis.getErrors().get(0));
     }
 
     @Test
@@ -140,7 +136,7 @@ public class ExprCorrectnessCheckerTest {
         Neg neg = new Neg(new ELitInt(56));
         SemanticAnalysis<Type> analysis = neg.accept(new ExprCorrectnessChecker(), null);
         assertFalse(analysis.hasErrors());
-        assertEquals(INT, analysis.getT());
+        assertEquals(TypeConstants.INT, analysis.getT());
     }
 
     @Test
@@ -148,7 +144,7 @@ public class ExprCorrectnessCheckerTest {
         EMul mul = new EMul(new ELitInt(5), new Times(), new ELitInt(10));
         SemanticAnalysis<Type> analysis = mul.accept(new ExprCorrectnessChecker(), null);
         assertFalse(analysis.hasErrors());
-        assertEquals(INT, analysis.getT());
+        assertEquals(TypeConstants.INT, analysis.getT());
     }
 
     @Test
@@ -157,7 +153,7 @@ public class ExprCorrectnessCheckerTest {
         SemanticAnalysis<Type> analysis = mul.accept(new ExprCorrectnessChecker(), null);
         assertTrue(analysis.hasErrors());
         assertEquals(1, analysis.getErrors().size());
-        assertEquals(new TypeError(INT, STRING), analysis.getErrors().get(0));
+        assertEquals(new TypeError(TypeConstants.INT, TypeConstants.STRING), analysis.getErrors().get(0));
     }
 
 

@@ -1,8 +1,8 @@
 package Utils;
 
 import Latte.Absyn.Type;
-import VisibilityChecker.Errors.SemanticError;
-import VisibilityChecker.Errors.TypeError;
+import Checkers.Errors.SemanticError;
+import Checkers.Errors.TypeError;
 
 import java.util.ArrayList;
 import java.util.List;

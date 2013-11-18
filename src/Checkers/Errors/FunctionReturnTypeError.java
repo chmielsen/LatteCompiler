@@ -1,4 +1,4 @@
-package VisibilityChecker.Errors;
+package Checkers.Errors;
 
 import Latte.Absyn.Type;
 

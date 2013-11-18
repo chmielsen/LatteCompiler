@@ -1,14 +1,13 @@
 package Latte;
 
-import FunctionRecognizer.ProgramFR;
+import Checkers.ProgramCorrectnessChecker;
+import FunctionRecognizer.ProgramFunRecognizer;
 import Latte.Absyn.Program;
 import Utils.SemanticAnalysis;
 import Utils.State;
-import VisibilityChecker.Errors.SemanticError;
-import VisibilityChecker.ProgramVC;
+import Checkers.Errors.SemanticError;
 
 import java.io.*;
-import java.net.URI;
 import java.util.*;
 
 public class Test
@@ -87,7 +86,7 @@ public class Test
             parser parsereiro = new parser(lexer);
             Program program = parsereiro.pProgram();
             State state = new State();
-            SemanticAnalysis fnAnalysis = program.accept(new ProgramFR(), state);
+            SemanticAnalysis fnAnalysis = program.accept(new ProgramFunRecognizer(), state);
             if (fnAnalysis.hasErrors()) {
                 System.out.print("[GOOD] " + file.getName() + " : ");
                 List<SemanticError> errors = fnAnalysis.getErrors();
@@ -98,7 +97,7 @@ public class Test
             System.out.println("[INFO] " + file.getName() + " " + state.getDeclaredFunctions());
 
             // Start analyzing functions
-            SemanticAnalysis programAnalysis = program.accept(new ProgramVC(), state);
+            SemanticAnalysis programAnalysis = program.accept(new ProgramCorrectnessChecker(), state);
 
             if (programAnalysis.hasErrors()) {
                 System.out.print("[FATAL] " + file.getName() + " : ");

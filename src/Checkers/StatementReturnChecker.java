@@ -1,22 +1,26 @@
-package VisibilityChecker;
+package Checkers;
 
+import Checkers.Errors.FunctionReturnTypeError;
+import Checkers.Errors.IfElseTypeMismatch;
 import Latte.Absyn.*;
-import Utils.SemanticAnalysis;
 import Utils.ExpectedType;
+import Utils.SemanticAnalysis;
 import Utils.State;
-import VisibilityChecker.Errors.FunctionReturnTypeError;
-import VisibilityChecker.Errors.IfElseTypeMismatch;
+import Utils.TypeConstants;
 
-import static VisibilityChecker.StatementVC.declareVariable;
+import static Checkers.StatementCorrectnessChecker.declareVariable;
 
 /**
- * Checks whether function has a return statement and returns the returned Type on
- * no errrors
- * This visitor is called after first analysis, but we still need to add variables
- * to current state.
+ * Implements Visitor pattenr for {@link Stmt} in order to check whether
+ * statement has a return statement.
+ *
+ * Each method from {@link Stmt.Visitor} returns the returned {@link Type} on
+ * success, list of {@link Checkers.Errors.SemanticError} otherwise
+ *
+ * These methods shouble be called after first analysis, because they assume
+ * semantical correctness (without correct type on returns) of statements.
  */
-public class FunctionReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type>, ExpectedType> {
-
+public class StatementReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type>, ExpectedType> {
 
     @Override
     public SemanticAnalysis<Type> visit(SEmpty p, ExpectedType expectedType) {
@@ -55,7 +59,7 @@ public class FunctionReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type
         return new SemanticAnalysis<Type>();
     }
 
-    // Most important in this bitch
+    // The 'meat' of this checker
     @Override
     public SemanticAnalysis<Type> visit(SRet p, ExpectedType expectedType) {
         SemanticAnalysis<Type> analysis = p.expr_.accept(new ExprCorrectnessChecker(), expectedType.getState());
@@ -67,16 +71,15 @@ public class FunctionReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type
         return analysis;
     }
 
+    // The 'meat' of this checker
     @Override
     public SemanticAnalysis<Type> visit(SVRet p, ExpectedType expectedType) {
-        if (!ExprCorrectnessChecker.VOID.equals(expectedType.getType())) {
-            return SemanticAnalysis.createSemanticAnalysis(new FunctionReturnTypeError(expectedType.getType(), ExprCorrectnessChecker.VOID));
+        if (!TypeConstants.VOID.equals(expectedType.getType())) {
+            return SemanticAnalysis.createSemanticAnalysis(new FunctionReturnTypeError(expectedType.getType(), TypeConstants.VOID));
         }
-        return SemanticAnalysis.createSemanticAnalysis(ExprCorrectnessChecker.VOID);
+        return SemanticAnalysis.createSemanticAnalysis(TypeConstants.VOID);
     }
 
-    // Don't need to parse, because it's conditional, we can't
-    // be sure if the programs go into the body of if
     @Override
     public SemanticAnalysis<Type> visit(SCond p, ExpectedType expectedType) {
         SemanticAnalysis<Type> analysis = p.stmt_.accept(this, expectedType);
@@ -84,22 +87,29 @@ public class FunctionReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type
             // SRet is throwing errors
             return analysis;
         }
-        // DOdaj wyprowadzenie satlych
+        // Simple checking if expression is always True.
+        // If so the function will always return the value from if's
+        // statement.
         if (p.expr_ instanceof ELitTrue) {
-            return SemanticAnalysis.createSemanticAnalysis(ExprCorrectnessChecker.BOOL);
+            return analysis;
         }
         return new SemanticAnalysis<Type>();
     }
 
-    // only if two statements have return then it's ok
     @Override
     public SemanticAnalysis<Type> visit(SCondElse p, ExpectedType expectedType) {
-        // we are sure that expression is correct, because it
+        // We are sure that expression is correct, because it
         // was analysed before
         SemanticAnalysis<Type> analysisIfTrue = p.stmt_1.accept(this, expectedType);
         SemanticAnalysis<Type> analysisIfFalse = p.stmt_2.accept(this, expectedType);
-        if (p.expr_ instanceof )
-        if (analysisIfFalse.getT() == null || analysisIfTrue.getT() == null) {
+
+        if (analysisIfFalse.hasErrors() || analysisIfTrue.hasErrors()) {
+            return analysisIfFalse.merge(analysisIfTrue);
+        } else if (p.expr_ instanceof ELitTrue) {
+            return analysisIfTrue;
+        } else if (p.expr_ instanceof ELitFalse) {
+            return analysisIfFalse;
+        } else if (analysisIfFalse.getT() == null || analysisIfTrue.getT() == null) {
             return new SemanticAnalysis<Type>();
         } else if (analysisIfFalse.getT() == analysisIfFalse.getT()) {
             return SemanticAnalysis.createSemanticAnalysis(analysisIfFalse.getT());
@@ -108,7 +118,6 @@ public class FunctionReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type
                     new IfElseTypeMismatch(analysisIfFalse.getT(),
                             analysisIfTrue.getT()));
         }
-
     }
 
     // Don't need to parse, because it's conditional, we can't
@@ -118,6 +127,12 @@ public class FunctionReturnChecker implements Stmt.Visitor<SemanticAnalysis<Type
         SemanticAnalysis<Type> analysis = p.stmt_.accept(this, expectedType);
         if (analysis.hasErrors()) {
             // SRet is throwing errors
+            return analysis;
+        }
+        // Simple checking if expression is always True.
+        // If so the function will always return the value from while's
+        // statement.
+        if (p.expr_ instanceof ELitTrue) {
             return analysis;
         }
         return new SemanticAnalysis<Type>();

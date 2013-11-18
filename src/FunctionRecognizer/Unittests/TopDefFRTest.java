@@ -1,14 +1,11 @@
 package FunctionRecognizer.Unittests;
 
-import FunctionRecognizer.TopDefFR;
+import FunctionRecognizer.TopDefFunRecognizer;
 import Latte.Absyn.*;
 import Utils.FunctionSignature;
 import Utils.SemanticAnalysis;
 import Utils.State;
 import org.junit.Test;
-
-import java.util.AbstractMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -29,7 +26,7 @@ public class TopDefFRTest {
         listArg.add(new Arg(new TStr(), null));
         listArg.add(new Arg(new TInt(), null));
         FnDef fnDef = new FnDef(new TInt(), IDENTIFIER, listArg, null);
-        TopDefFR topDefTypeRecognizer = new TopDefFR();
+        TopDefFunRecognizer topDefTypeRecognizer = new TopDefFunRecognizer();
 
         State state = new State();
         SemanticAnalysis analysis = topDefTypeRecognizer.visit(fnDef, state);

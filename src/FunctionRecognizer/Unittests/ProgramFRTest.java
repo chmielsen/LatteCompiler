@@ -1,15 +1,6 @@
 package FunctionRecognizer.Unittests;
 
-import FunctionRecognizer.ProgramFR;
-import Latte.Absyn.*;
-import Utils.FunctionSignature;
-import Utils.SemanticAnalysis;
-import junit.framework.Assert;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.

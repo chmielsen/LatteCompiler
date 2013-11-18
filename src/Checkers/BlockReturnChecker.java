@@ -1,13 +1,14 @@
-package VisibilityChecker;
+package Checkers;
 
 import Latte.Absyn.Block;
 import Latte.Absyn.Stmt;
 import Latte.Absyn.Type;
-import Utils.SemanticAnalysis;
 import Utils.ExpectedType;
+import Utils.SemanticAnalysis;
 
 /**
- * The state is the copy
+ * Class implementing Visitor pattern in order to check {@link Block}for return statements.
+ * To keep variable local to the block the state in {@link ExpectedType} have to be a copy
  */
 public class BlockReturnChecker implements Block.Visitor<SemanticAnalysis<Type>, ExpectedType> {
 
@@ -16,7 +17,7 @@ public class BlockReturnChecker implements Block.Visitor<SemanticAnalysis<Type>,
         expectedType.getState().setCurrentBlock(block);
         SemanticAnalysis analysis = new SemanticAnalysis();
         for (Stmt statement : block.liststmt_) {
-            analysis = analysis.merge(statement.accept(new FunctionReturnChecker(), expectedType));
+            analysis = analysis.merge(statement.accept(new StatementReturnChecker(), expectedType));
         }
         return analysis;
     }

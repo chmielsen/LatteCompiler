@@ -7,11 +7,14 @@ import Latte.Absyn.TopDef;
 import Utils.FunctionSignature;
 import Utils.SemanticAnalysis;
 import Utils.State;
-import VisibilityChecker.Errors.DuplicatedIdentifier;
+import Checkers.Errors.DuplicatedIdentifier;
 
 import static Utils.SemanticAnalysis.createSemanticAnalysis;
 
-public class TopDefFR implements TopDef.Visitor<SemanticAnalysis, State> {
+/**
+ * Class implementing Visitor pattern
+ */
+public class TopDefFunRecognizer implements TopDef.Visitor<SemanticAnalysis, State> {
 
     @Override
     public SemanticAnalysis visit(FnDef p, State state) {

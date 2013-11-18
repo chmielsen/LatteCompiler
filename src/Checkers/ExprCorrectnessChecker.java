@@ -1,25 +1,19 @@
-package VisibilityChecker;
+package Checkers;
 
+import Checkers.Errors.*;
 import Latte.Absyn.*;
 import Utils.SemanticAnalysis;
 import Utils.State;
-import VisibilityChecker.Errors.*;
+import Utils.TypeConstants;
 
 import java.util.ListIterator;
 
 /**
  * Class implementing semantic analysis of expression. On successful analysis
- * the type of the expression will be returned.
+ * the type of the expression will be returned, otherwise the {@link SemanticAnalysis}
+ * object contains list of {@link SemanticError}
  */
 public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Type>, State> {
-
-    public static TInt INT = new TInt();
-
-    public static TStr STRING = new TStr();
-
-    public static TBool BOOL = new TBool();
-
-    public static TVoid VOID = new TVoid();
 
     @Override
     public SemanticAnalysis<Type> visit(EVar expr, State state) {
@@ -31,17 +25,17 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
 
     @Override
     public SemanticAnalysis<Type> visit(ELitInt expr, State state) {
-        return SemanticAnalysis.createSemanticAnalysis(INT);
+        return SemanticAnalysis.createSemanticAnalysis(TypeConstants.INT);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitTrue expr, State state) {
-        return SemanticAnalysis.createSemanticAnalysis(BOOL);
+        return SemanticAnalysis.createSemanticAnalysis(TypeConstants.BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(ELitFalse expr, State state) {
-        return SemanticAnalysis.createSemanticAnalysis(BOOL);
+        return SemanticAnalysis.createSemanticAnalysis(TypeConstants.BOOL);
     }
 
     @Override
@@ -93,7 +87,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
 
     @Override
     public SemanticAnalysis<Type> visit(EString expr, State state) {
-        return SemanticAnalysis.createSemanticAnalysis(STRING);
+        return SemanticAnalysis.createSemanticAnalysis(TypeConstants.STRING);
     }
 
     @Override
@@ -102,9 +96,9 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         if (analysis.hasErrors()) {
             return analysis;
         } else {
-            if (!analysis.getT().equals(INT)) {
+            if (!analysis.getT().equals(TypeConstants.INT)) {
                 // Only ints can have '-' beore them
-                return SemanticAnalysis.createSemanticAnalysis(new TypeError(INT, analysis.getT()));
+                return SemanticAnalysis.createSemanticAnalysis(new TypeError(TypeConstants.INT, analysis.getT()));
             } else {
                 return analysis;
             }
@@ -117,9 +111,9 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         if (analysis.hasErrors()) {
             return analysis;
         } else {
-            if (!analysis.getT().equals(BOOL)) {
+            if (!analysis.getT().equals(TypeConstants.BOOL)) {
                 // Only bools can have '!' beore them
-                return SemanticAnalysis.createSemanticAnalysis(new TypeError(BOOL, analysis.getT()));
+                return SemanticAnalysis.createSemanticAnalysis(new TypeError(TypeConstants.BOOL, analysis.getT()));
             } else {
                 return analysis;
             }
@@ -128,7 +122,7 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
 
     @Override
     public SemanticAnalysis<Type> visit(EMul expr, State state) {
-        return checkExprsTypes(state, expr.expr_1, expr.expr_2, INT);
+        return checkExprsTypes(state, expr.expr_1, expr.expr_2, TypeConstants.INT);
     }
 
     @Override
@@ -136,11 +130,11 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
         SemanticAnalysis<Type> analysis = checkExprsSameType(state, expr.expr_1, expr.expr_2);
         if (analysis.hasErrors()) {
             return analysis;
-        } else if (analysis.getT().equals(INT) || analysis.getT().equals(STRING)){
+        } else if (analysis.getT().equals(TypeConstants.INT) || analysis.getT().equals(TypeConstants.STRING)){
             return analysis;
         } else {
             // TODO popraw msg
-            return SemanticAnalysis.createSemanticAnalysis(new TypeError(INT, analysis.getT()));
+            return SemanticAnalysis.createSemanticAnalysis(new TypeError(TypeConstants.INT, analysis.getT()));
         }
     }
 
@@ -152,22 +146,22 @@ public class ExprCorrectnessChecker implements Expr.Visitor<SemanticAnalysis<Typ
             analysis = checkExprsSameType(state, expr.expr_1, expr.expr_2);
         } else {
             // can check which one greater with INT
-            analysis = checkExprsTypes(state, expr.expr_1, expr.expr_2, INT);
+            analysis = checkExprsTypes(state, expr.expr_1, expr.expr_2, TypeConstants.INT);
         }
         if (analysis.hasErrors()) {
             return analysis;
         }
-        return SemanticAnalysis.createSemanticAnalysis(BOOL);
+        return SemanticAnalysis.createSemanticAnalysis(TypeConstants.BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EAnd expr, State state) {
-        return checkExprsTypes(state, expr.expr_1, expr.expr_2, BOOL);
+        return checkExprsTypes(state, expr.expr_1, expr.expr_2, TypeConstants.BOOL);
     }
 
     @Override
     public SemanticAnalysis<Type> visit(EOr expr, State state) {
-        return checkExprsTypes(state, expr.expr_1, expr.expr_2, BOOL);
+        return checkExprsTypes(state, expr.expr_1, expr.expr_2, TypeConstants.BOOL);
     }
 
     private SemanticAnalysis<Type> checkExprsSameType(State state, Expr expr1, Expr expr2) {
